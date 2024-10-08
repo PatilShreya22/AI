@@ -1,0 +1,55 @@
+from collections import deque
+
+def dfs(start, max_depth):
+    stack = deque([(start, [start], 0)])  # (node, path, level)
+    visited = set([start])
+    all_moves = []
+    while stack:
+        node, path, level = stack.pop()
+        all_moves.append((path, level))
+        if level < max_depth:
+            for next_node in get_neighbors(node):
+                if next_node not in visited:
+                    visited.add(next_node)
+                    stack.append((next_node, path + [next_node], level + 1))
+    return all_moves
+
+def get_neighbors(node):
+    neighbors = []
+    for i in range(9):
+        if node[i] == 0:
+            x, y = i // 3, i % 3
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < 3 and 0 <= ny < 3:
+                    n = list(node)
+                    n[i], n[nx * 3 + ny] = n[nx * 3 + ny], n[i]
+                    neighbors.append(tuple(n))
+            break
+    return neighbors
+
+def print_board(board):
+    board = [board[i:i+3] for i in range(0, 9, 3)]
+    for row in board:
+        print(" | ".join(str(x) for x in row))
+        print("---------")
+
+def main():
+    start = tuple(int(x) for x in input("Enter the initial state (space-separated): ").split())
+    max_depth = 10  # maximum depth to search
+    all_moves = dfs(start, max_depth)
+    if all_moves:
+        print("All possible moves:")
+        for i, (path, level) in enumerate(all_moves):
+            print(f"Move {i+1}:")
+            for j, node in enumerate(path):
+                print(f"Step {j}:")
+                print_board(node)
+                print()
+            print(f"Number of moves: {level}")
+            print()
+    else:
+        print("No solution found.")
+
+if __name__ == "__main__":
+    main()
