@@ -1,0 +1,318 @@
+import heapq
+
+def misplaced_tile(state, goal_state):
+    misplaced = 0
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] != 0 and state[i][j] != goal_state[i][j]:
+                misplaced += 1
+    return misplaced
+
+def find_blank(state):
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == 0:
+                return i, j
+
+def generate_neighbors(state):
+    neighbors = []
+    x, y = find_blank(state) 
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)] 
+
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < 3 and 0 <= ny < 3: 
+            new_state = [list(row) for row in state] 
+            new_state[x][y], new_state[nx][ny] = new_state[nx][ny], new_state[x][y]
+            neighbors.append(tuple(tuple(row) for row in new_state))  
+
+    return neighbors
+
+def reconstruct_path(came_from, current):
+    
+    path = [current]
+    while current in came_from:
+        current = came_from[current]
+        path.append(current)
+    path.reverse()  
+    return path
+
+def a_star(start, goal):
+    open_list = [] 
+    heapq.heappush(open_list, (0 + misplaced_tile(start, goal), 0, start)) 
+
+    g_score = {start: 0}  
+    came_from = {} 
+
+    visited = set() 
+
+    while open_list:
+        _, g, current = heapq.heappop(open_list)  
+
+        if current == goal:
+            path = reconstruct_path(came_from, current)
+            return path, g 
+
+        visited.add(current)
+
+        for neighbor in generate_neighbors(current):
+            if neighbor in visited:
+                continue 
+            tentative_g = g_score[current] + 1  
+
+            if tentative_g < g_score.get(neighbor, float('inf')):
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g
+                f_score = tentative_g + misplaced_tile(neighbor, goal)  # f(n) = g(n) + h(n)
+
+                heapq.heappush(open_list, (f_score, tentative_g, neighbor))  
+
+    return None, None 
+
+def print_state(state):
+    
+    for row in state:
+        print(row)
+    print()
+
+def get_state_from_user(prompt):
+    
+    state = []
+    for i in range(3):
+        row = input(f"{prompt} row {i+1} (space-separated): ")
+        state.append(tuple(map(int, row.split())))
+    return tuple(state)
+
+if __name__ == "__main__":
+    print("Enter the initial state:")
+    start_state = get_state_from_user("Initial state")
+    print("\nEnter the goal state:")
+    goal_state = get_state_from_user("Goal state")
+
+    print("\nInitial State:")
+    print_state(start_state)
+
+    print("\nGoal State:")
+    print_state(goal_state)
+
+    solution, cost = a_star(start_state, goal_state)
+
+    if solution:
+        print(f"\nSolution found with cost: {cost}")
+        print("Steps:")
+        for step in solution:
+            print_state(step)
+    else:
+        print("\nNo solution found.")
+
+OUTPUT:
+Enter the initial state:
+Initial state row 1 (space-separated): 2 8 3
+Initial state row 2 (space-separated): 1 6 4
+Initial state row 3 (space-separated): 7 0 5
+
+Enter the goal state:
+Goal state row 1 (space-separated): 1 2 3
+Goal state row 2 (space-separated): 8 0 4
+Goal state row 3 (space-separated): 7 6 5
+
+Initial State:
+(2, 8, 3)
+(1, 6, 4)
+(7, 0, 5)
+
+
+Goal State:
+(1, 2, 3)
+(8, 0, 4)
+(7, 6, 5)
+
+
+Solution found with cost: 5
+Steps:
+(2, 8, 3)
+(1, 6, 4)
+(7, 0, 5)
+
+(2, 8, 3)
+(1, 0, 4)
+(7, 6, 5)
+
+(2, 0, 3)
+(1, 8, 4)
+(7, 6, 5)
+
+(0, 2, 3)
+(1, 8, 4)
+(7, 6, 5)
+
+(1, 2, 3)
+(0, 8, 4)
+(7, 6, 5)
+
+(1, 2, 3)
+(8, 0, 4)
+(7, 6, 5)
+
+
+import heapq
+
+def manhattan_distance(state, goal_state):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            value = state[i][j]
+            if value != 0:
+                goal_i, goal_j = find_position(value, goal_state)
+                distance += abs(i - goal_i) + abs(j - goal_j)
+    return distance
+
+def find_position(value, state):
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == value:
+                return i, j
+
+def find_blank(state):
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == 0:
+                return i, j
+
+def generate_neighbors(state):
+    neighbors = []
+    x, y = find_blank(state) 
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)] 
+
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < 3 and 0 <= ny < 3: 
+            new_state = [list(row) for row in state] 
+            new_state[x][y], new_state[nx][ny] = new_state[nx][ny], new_state[x][y]
+            neighbors.append(tuple(tuple(row) for row in new_state))  
+
+    return neighbors
+
+def reconstruct_path(came_from, current):
+    path = [current]
+    while current in came_from:
+        current = came_from[current]
+        path.append(current)
+    path.reverse()  
+    return path
+
+def a_star(start, goal):
+    open_list = [] 
+    heapq.heappush(open_list, (0 + manhattan_distance(start, goal), 0, start)) 
+
+    g_score = {start: 0}  
+    came_from = {} 
+
+    visited = set() 
+
+    while open_list:
+        _, g, current = heapq.heappop(open_list)  
+
+        if current == goal:
+            path = reconstruct_path(came_from, current)
+            return path, g 
+
+        visited.add(current)
+
+        for neighbor in generate_neighbors(current):
+            if neighbor in visited:
+                continue 
+            tentative_g = g_score[current] + 1  
+
+            if tentative_g < g_score.get(neighbor, float('inf')):
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g
+                f_score = tentative_g + manhattan_distance(neighbor, goal)  
+
+                heapq.heappush(open_list, (f_score, tentative_g, neighbor))  
+
+    return None, None 
+
+def print_state(state):
+    for row in state:
+        print(row)
+    print()
+
+def get_state_from_user(prompt):
+    state = []
+    for i in range(3):
+        row = input(f"{prompt} row {i+1} (space-separated): ")
+        state.append(tuple(map(int, row.split())))
+    return tuple(state)
+
+if __name__ == "__main__":
+    print("Enter the initial state:")
+    start_state = get_state_from_user("Initial state")
+    print("\nEnter the goal state:")
+    goal_state = get_state_from_user("Goal state")
+
+    print("\nInitial State:")
+    print_state(start_state)
+
+    print("\nGoal State:")
+    print_state(goal_state)
+
+    solution, cost = a_star(start_state, goal_state)
+
+    if solution:
+        print(f"\nSolution found with cost: {cost}")
+        print("Steps:")
+        for step in solution:
+            print_state(step)
+    else:
+        print("\nNo solution found.")
+
+OUTPUT:
+Enter the initial state:
+Initial state row 1 (space-separated): 2 8 3
+Initial state row 2 (space-separated): 1 6 4
+Initial state row 3 (space-separated): 7 0 5
+
+Enter the goal state:
+Goal state row 1 (space-separated): 1 2 3
+Goal state row 2 (space-separated): 8 0 4
+Goal state row 3 (space-separated): 7 6 5
+
+Initial State:
+(2, 8, 3)
+(1, 6, 4)
+(7, 0, 5)
+
+
+Goal State:
+(1, 2, 3)
+(8, 0, 4)
+(7, 6, 5)
+
+
+Solution found with cost: 5
+Steps:
+(2, 8, 3)
+(1, 6, 4)
+(7, 0, 5)
+
+(2, 8, 3)
+(1, 0, 4)
+(7, 6, 5)
+
+(2, 0, 3)
+(1, 8, 4)
+(7, 6, 5)
+
+(0, 2, 3)
+(1, 8, 4)
+(7, 6, 5)
+
+(1, 2, 3)
+(0, 8, 4)
+(7, 6, 5)
+
+(1, 2, 3)
+(8, 0, 4)
+(7, 6, 5)
+
